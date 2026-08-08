@@ -5,7 +5,7 @@ import type { Banner, Brand, Category, HeroContent, Product, StoreSettings } fro
  * navegador descartar a cópia antiga guardada no localStorage e recarregar
  * a semente — sem isso, quem já visitou o site continua vendo os dados velhos.
  */
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;
 
 const IMG = {
   amber:
@@ -56,7 +56,7 @@ export const SEED_CATEGORIES: Category[] = [
     name: 'Perfumes Nacionais',
     tagline: 'As casas brasileiras que a gente usa todo dia, com preço de gente.',
     icon: 'Leaf',
-    image: COVER('perfumes-nacionais'),
+    image: '/img/cat-perfumes-nacionais-v2-896.webp',
     order: 2,
     active: true,
   },
@@ -76,7 +76,7 @@ export const SEED_CATEGORIES: Category[] = [
     name: 'Body Splash',
     tagline: 'Fragrância leve para borrifar à vontade, no calor e depois do banho.',
     icon: 'Droplet',
-    image: '/img/cat-body-splash-v2-896.webp',
+    image: COVER('body-splash'),
     order: 4,
     active: true,
   },
