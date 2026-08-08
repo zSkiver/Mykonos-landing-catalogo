@@ -1,0 +1,33 @@
+# Cabeçalhos de segurança para o deploy no Cloudflare.
+#
+# Arquivos em public/ são copiados para dist/, e o Cloudflare lê este _headers
+# ao servir os arquivos estáticos. Sem ele o site vai ao ar sem nenhuma
+# proteção de cabeçalho — foi o que a auditoria encontrou.
+#
+# A CSP foi montada a partir do que o site consome de fato: fontes do Google,
+# a API do Supabase, o mapa incorporado e imagens que o painel pode apontar
+# para qualquer host.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src https://maps.google.com https://www.google.com; upgrade-insecure-requests
+
+# O painel nunca deve ser indexado. O robots.txt apenas pede que não seja
+# rastreado; este cabeçalho impede a indexação mesmo se alguém criar um link.
+/admin
+  X-Robots-Tag: noindex, nofollow
+
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+
+# Os arquivos com hash no nome podem ser guardados para sempre.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
