@@ -1,0 +1,275 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Mykonos Parfum — sistema de design
+
+   A marca já existia no logo: um Θ branco, desenhado numa didone, sobre azul
+   egeu. Mykonos é uma ilha grega — theta, azul do mar e cal branca das casas
+   das Cíclades. Daí vêm a paleta e a tipografia. Não há dourado.
+
+   Lora (destaques) · Manrope (texto) · IBM Plex Mono (dados)
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* claros — a cal das Cíclades */
+  --color-chalk: #ffffff;
+  --color-limewash: #eff1ee;
+  --color-salt: #dee1dc;
+
+  /* escuros — o mar */
+  --color-aegean: #2d4a6b;
+  --color-abyss: #16263a;
+  --color-deep: #0b1520;
+
+  /* texto */
+  --color-ink: #101c29;
+  --color-stone: #66707c;
+  --color-ash: #98a1ab;
+  --color-mist: #9baabb;
+
+  --font-display: 'Lora', Georgia, serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------- base */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-chalk);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* `clip` contém o estouro horizontal sem criar um container de rolagem,
+       o que quebraria o header sticky. */
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--color-aegean);
+    color: var(--color-chalk);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-aegean);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.12;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-limewash);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-salt);
+    border: 3px solid var(--color-limewash);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-aegean);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- utilitários */
+
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+@utility numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Texto vertical lendo de baixo para cima, como nas lombadas dos frascos. */
+@utility vertical-text {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+@utility shell {
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (width >= 768px) {
+    padding-inline: 2.5rem;
+  }
+}
+
+@utility shell-wide {
+  width: 100%;
+  max-width: 110rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (width >= 768px) {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* -------------------------------------------------------------- componentes */
+
+@layer components {
+  @keyframes offer-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .offer-progress {
+    transform-origin: left;
+    animation-name: offer-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+
+  /* A régua do theta: a barra que atravessa o Θ do logo, reaproveitada como
+     divisor entre seções. */
+  .rule {
+    height: 1px;
+    width: 100%;
+    background: var(--color-salt);
+  }
+
+  .rule-invert {
+    height: 1px;
+    width: 100%;
+    background: color-mix(in srgb, var(--color-chalk) 22%, transparent);
+  }
+
+  /* Rótulo em mono seguido de régua — a gramática da pirâmide olfativa. */
+  .tier-label {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .tier-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.28;
+  }
+
+  .link-underline {
+    position: relative;
+  }
+
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    height: 1px;
+    width: 100%;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.45s var(--ease-silk);
+  }
+
+  .link-underline:hover::after,
+  .link-underline[data-active='true']::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Botão com brilho que atravessa no hover. */
+  .btn-primary {
+    position: relative;
+    overflow: hidden;
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease,
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 0%,
+      color-mix(in srgb, currentColor 12%, transparent) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgb(16 28 41 / 0.16);
+  }
+
+  .btn-primary:hover::before {
+    transform: translateX(100%);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgb(16 28 41 / 0.1);
+  }
+}
