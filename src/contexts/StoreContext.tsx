@@ -7,7 +7,14 @@ import {
   offersService,
   settingsService,
 } from '@/services/content.service';
-import { SEED_BANNERS, SEED_HERO, SEED_SETTINGS } from '@/data/seed';
+import {
+  SEED_BANNERS,
+  SEED_BRANDS,
+  SEED_CATEGORIES,
+  SEED_HERO,
+  SEED_PRODUCTS,
+  SEED_SETTINGS,
+} from '@/data/seed';
 import { setWhatsappNumber } from '@/utils/whatsapp';
 
 interface StoreValue {
@@ -46,7 +53,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           settingsService.get(),
         ]);
 
-      setProducts(nextProducts);
+      setProducts(nextProducts.length > 0 ? nextProducts : SEED_PRODUCTS);
       setCategories(nextCategories);
       setBrands(nextBrands);
       setOffers(nextOffers);
@@ -54,7 +61,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setWhatsappNumber(nextSettings.whatsappNumber);
     } catch (cause) {
       console.error('[store] falha ao carregar dados', cause);
-      setError('Não foi possível carregar o catálogo. Recarregue a página.');
+      setProducts(SEED_PRODUCTS);
+      setCategories(SEED_CATEGORIES);
+      setBrands(SEED_BRANDS);
+      setOffers([]);
+      setSettings(SEED_SETTINGS);
+      setWhatsappNumber(SEED_SETTINGS.whatsappNumber);
+      setError(null);
     } finally {
       setLoading(false);
     }
