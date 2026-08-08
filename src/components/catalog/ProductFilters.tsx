@@ -144,13 +144,17 @@ function FilterFields({
         </NativeSelect>
       </Field>
 
-      <Field label="Tipo">
-        <ChipRow
-          options={Object.entries(PRODUCT_KIND_LABEL) as [ProductKind, string][]}
-          selected={filters.kind}
-          onSelect={(value) => setFilter('kind', value)}
-        />
-      </Field>
+      {/* O tipo vem da categoria: dentro de "Perfumes importados" oferecer
+          "Nacional" só produz uma lista vazia. Só faz sentido no acervo todo. */}
+      {!filters.category && (
+        <Field label="Tipo">
+          <ChipRow
+            options={Object.entries(PRODUCT_KIND_LABEL) as [ProductKind, string][]}
+            selected={filters.kind}
+            onSelect={(value) => setFilter('kind', value)}
+          />
+        </Field>
+      )}
 
       <Field label="Gênero">
         <ChipRow

@@ -17,6 +17,7 @@ import {
   type ProductVariant,
 } from '@/types';
 import { randomId, slugify } from '@/utils/slug';
+import { isScented, kindForCategory } from '@/utils/productKinds';
 
 const EMPTY: ProductInput = {
   slug: '',
@@ -82,6 +83,16 @@ export default function ProductEditor() {
   const set = <K extends keyof ProductInput>(key: K, value: ProductInput[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
+  /**
+   * A categoria escolhida define o tipo, e o tipo define quais campos aparecem.
+   * Derivamos a cada render em vez de só no onChange porque um cadastro antigo
+   * pode ter vindo do banco com os dois campos discordando — assim ele se
+   * corrige sozinho na próxima gravação.
+   */
+  const derivedKind = kindForCategory(form.categorySlug);
+  const kind = derivedKind ?? form.kind;
+  const scented = isScented(kind);
+
   const patchVariant = (index: number, changes: Partial<ProductVariant>) =>
     setForm((current) => ({
       ...current,
@@ -130,12 +141,25 @@ export default function ProductEditor() {
     setSaving(true);
     try {
       const brand = brands.find((item) => item.name === form.brand);
+      const pyramid = form.pyramid;
+      const hasNotes = Boolean(
+        pyramid && (pyramid.top.length || pyramid.heart.length || pyramid.base.length),
+      );
+
       const payload: ProductInput = {
         ...form,
         slug: form.slug || slugify(`${form.brand}-${form.name}`),
         brandSlug: brand?.slug ?? slugify(form.brand),
+        kind,
         promoPrice: form.promoPrice && form.promoPrice > 0 ? form.promoPrice : undefined,
         variants,
+        // Um creme não tem nota de saída. Se o produto deixou de ser perfumaria,
+        // gravar `undefined` apaga o que sobrou de um cadastro anterior — senão
+        // a página dele volta a exibir uma pirâmide vazia.
+        olfactoryFamily: scented ? form.olfactoryFamily?.trim() || undefined : undefined,
+        pyramid: scented && hasNotes ? pyramid : undefined,
+        longevity: scented ? form.longevity : undefined,
+        projection: scented ? form.projection : undefined,
       };
 
       if (isNew || !id) await createProduct(payload);
@@ -192,6 +216,50 @@ export default function ProductEditor() {
         </p>
       )}
 
+      <FormSection
+        title="Categoria"
+        description="Comece por aqui. É a categoria que define quais campos o formulário pede embaixo — um perfume pede pirâmide olfativa, um shampoo não."
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Categoria">
+            <Select
+              value={form.categorySlug}
+              onChange={(event) => set('categorySlug', event.target.value)}
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.slug}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {/* Vitrines como "Novidades" aceitam qualquer produto, então aí sim
+              o tipo precisa ser respondido à mão. */}
+          {derivedKind === null && (
+            <Field label="Tipo" hint="Esta categoria aceita produtos de tipos diferentes.">
+              <Select
+                value={form.kind}
+                onChange={(event) => set('kind', event.target.value as ProductKind)}
+              >
+                {Object.entries(PRODUCT_KIND_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+        </div>
+
+        <p className="mt-5 border-t border-salt pt-5 text-sm text-stone">
+          Tipo <span className="text-ink">{PRODUCT_KIND_LABEL[kind]}</span>.{' '}
+          {scented
+            ? 'Produto de perfumaria — o formulário vai pedir família, notas, fixação e projeção.'
+            : 'Sem perfil olfativo: os campos de notas e intensidade não aparecem.'}
+        </p>
+      </FormSection>
+
       <FormSection title="Identificação" description="O que aparece no card e na página do produto.">
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Nome" className="md:col-span-2">
@@ -218,32 +286,6 @@ export default function ProductEditor() {
             </datalist>
           </Field>
 
-          <Field label="Categoria">
-            <Select
-              value={form.categorySlug}
-              onChange={(event) => set('categorySlug', event.target.value)}
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.slug}>
-                  {category.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field label="Tipo">
-            <Select
-              value={form.kind}
-              onChange={(event) => set('kind', event.target.value as ProductKind)}
-            >
-              {Object.entries(PRODUCT_KIND_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
           <Field label="Gênero">
             <Select value={form.gender} onChange={(event) => set('gender', event.target.value as Gender)}>
               {Object.entries(GENDER_LABEL).map(([value, label]) => (
@@ -254,6 +296,17 @@ export default function ProductEditor() {
             </Select>
           </Field>
 
+          <Field
+            label="Ocasiões"
+            className="md:col-span-2"
+            hint="Opcional, separado por vírgula. Ex.: Noite, Trabalho, Dia a dia."
+          >
+            <TextInput
+              value={(form.occasions ?? []).join(', ')}
+              onChange={(event) => set('occasions', toList(event.target.value))}
+            />
+          </Field>
+
           <Field label="Descrição curta" className="md:col-span-2" hint="Duas linhas no máximo — aparece no card e na busca.">
             <TextArea
               required
@@ -262,7 +315,7 @@ export default function ProductEditor() {
             />
           </Field>
 
-          <Field label="Texto longo" className="md:col-span-2" hint="Opcional. Exibido ao lado da pirâmide olfativa.">
+          <Field label="Texto longo" className="md:col-span-2" hint="Opcional. Exibido na página do produto.">
             <TextArea value={form.story ?? ''} onChange={(event) => set('story', event.target.value)} />
           </Field>
         </div>
@@ -270,7 +323,7 @@ export default function ProductEditor() {
 
       <FormSection
         title="Preço e apresentação padrão"
-        description="É a apresentação principal do perfume. Outros tamanhos entram na seção abaixo."
+        description="É a apresentação principal do produto. Outros tamanhos entram na seção abaixo."
       >
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Preço (R$)">
@@ -309,7 +362,7 @@ export default function ProductEditor() {
 
       <FormSection
         title="Outros tamanhos"
-        description="Para o mesmo perfume em 50, 100, 200 ml. Nome, fotos, descrição e notas são compartilhados — muda só o volume e o preço, e o cliente escolhe na página do produto."
+        description="Para o mesmo produto em 50, 100, 200 ml. Nome, fotos e descrição são compartilhados — muda só o volume e o preço, e o cliente escolhe na página do produto."
       >
         <div className="space-y-4">
           {(form.variants ?? []).map((variant, index) => (
@@ -387,23 +440,19 @@ export default function ProductEditor() {
         <ImageUploader images={form.images} onChange={(images) => set('images', images)} />
       </FormSection>
 
+      {/* Só aparece para perfumaria — quem cadastra um creme não deveria nem
+          ver a pergunta. A checagem também vale na gravação, em submit(). */}
+      {scented && (
       <FormSection
         title="Perfil olfativo"
-        description="Separe as notas por vírgula. Deixe vazio para produtos que não são perfume."
+        description="Separe as notas por vírgula. É o que monta a pirâmide na página do produto."
       >
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Família olfativa">
+          <Field label="Família olfativa" className="md:col-span-2">
             <TextInput
               value={form.olfactoryFamily ?? ''}
               onChange={(event) => set('olfactoryFamily', event.target.value)}
               placeholder="Amadeirado especiado"
-            />
-          </Field>
-
-          <Field label="Ocasiões" hint="Ex.: Noite, Trabalho, Encontro">
-            <TextInput
-              value={(form.occasions ?? []).join(', ')}
-              onChange={(event) => set('occasions', toList(event.target.value))}
             />
           </Field>
 
@@ -464,7 +513,7 @@ export default function ProductEditor() {
           </Field>
         </div>
       </FormSection>
-
+      )}
     </form>
   );
 }

@@ -19,6 +19,8 @@ import { canonicalCategorySlug } from '@/utils/categories';
 import { generalMessage, productMessage } from '@/utils/whatsapp';
 import { applyActiveOffer } from '@/utils/offers';
 import { cheapestVariant, findVariant, variantSku } from '@/utils/variants';
+import { hasPyramid, isScented } from '@/utils/productKinds';
+import { cn } from '@/utils/cn';
 import NotFound from './NotFound';
 
 export default function ProductPage() {
@@ -60,6 +62,8 @@ export default function ProductPage() {
   const variant = variantId ? findVariant(product, variantId) : cheapestVariant(product);
   const price = effectivePrice(variant.price, variant.promoPrice);
   const badge = primaryBadge(product);
+  const pyramid = hasPyramid(product) ? (product.pyramid ?? null) : null;
+  const showPyramid = pyramid !== null;
   const assurances = [
     'Confirme a disponibilidade pelo WhatsApp antes de visitar a loja.',
     'Atendimento local em Rio Verde, GO.',
@@ -197,7 +201,9 @@ export default function ProductPage() {
               ))}
             </ul>
 
-            {(product.longevity || product.projection) && (
+            {/* Cadastros antigos de cosmético podem ter fixação gravada de um
+                tempo em que o formulário perguntava para todo mundo. */}
+            {isScented(product.kind) && (product.longevity || product.projection) && (
               <div className="mt-10 grid gap-8 border-t border-salt pt-8 sm:grid-cols-2">
                 {product.longevity && <IntensityMeter label="Fixação" value={product.longevity} />}
                 {product.projection && <IntensityMeter label="Projeção" value={product.projection} />}
@@ -227,26 +233,50 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {product.pyramid && (
+      {/* Sem notas cadastradas não há pirâmide — mas o texto longo, se houver,
+          continua merecendo um lugar. */}
+      {(showPyramid || product.story) && (
         <Section tone="limewash">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-24">
+          <div
+            className={cn(
+              'grid gap-14',
+              showPyramid && 'lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-24',
+            )}
+          >
             <Reveal>
-              <p className="eyebrow text-aegean">Pirâmide olfativa</p>
-              <h2 className="mt-6 text-balance lowercase text-3xl md:text-4xl">
-                como {product.name} <span className="italic text-aegean">se abre na pele</span>
-              </h2>
-              <p className="mt-6 max-w-sm text-pretty leading-relaxed text-stone">
-                Toda fragrância evapora em camadas. A saída é a primeira impressão; o fundo é o que
-                as pessoas lembram de você.
+              <p className="eyebrow text-aegean">
+                {showPyramid ? 'Pirâmide olfativa' : 'Sobre o produto'}
               </p>
+              <h2 className="mt-6 text-balance lowercase text-3xl md:text-4xl">
+                {showPyramid ? (
+                  <>
+                    como {product.name} <span className="italic text-aegean">se abre na pele</span>
+                  </>
+                ) : (
+                  <>
+                    o que faz <span className="italic text-aegean">{product.name}</span> valer a pena
+                  </>
+                )}
+              </h2>
+              {showPyramid && (
+                <p className="mt-6 max-w-sm text-pretty leading-relaxed text-stone">
+                  Toda fragrância evapora em camadas. A saída é a primeira impressão; o fundo é o
+                  que as pessoas lembram de você.
+                </p>
+              )}
               {product.story && (
-                <p className="mt-5 max-w-sm text-pretty text-sm leading-relaxed text-stone">
+                <p
+                  className={cn(
+                    'mt-5 text-pretty leading-relaxed text-stone',
+                    showPyramid ? 'max-w-sm text-sm' : 'mt-6 max-w-2xl',
+                  )}
+                >
                   {product.story}
                 </p>
               )}
             </Reveal>
 
-            <Pyramid pyramid={product.pyramid} />
+            {pyramid && <Pyramid pyramid={pyramid} />}
           </div>
         </Section>
       )}

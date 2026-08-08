@@ -85,6 +85,29 @@ componentes.**
 
 ---
 
+## A categoria comanda o produto
+
+`categorySlug` é a **primeira** decisão de todo cadastro; `kind` é derivado dela
+em `src/utils/productKinds.ts`, não perguntado. Antes eram duas perguntas
+independentes, e um produto na categoria certa com o tipo errado sumia do filtro
+sem explicação.
+
+- `kindForCategory(slug)` → o tipo, ou `null` para vitrines como "novidades",
+  que aceitam qualquer produto. Só nesse caso o formulário pergunta o tipo.
+- `isScented(kind)` → decide quem tem pirâmide, fixação e projeção. A Mykonos
+  vende cabelo e cosmético: **shampoo não tem nota de saída.** O formulário
+  esconde a seção e o `submit` grava `undefined` nesses campos, para não deixar
+  resto de um cadastro anterior.
+- `hasPyramid(product)` → uma pirâmide com as três listas vazias continua sendo
+  objeto. Nunca use `product.pyramid &&` para decidir se a seção aparece.
+
+No catálogo o filtro **Tipo** só existe quando não há categoria escolhida —
+dentro de "Perfumes importados", oferecer "Nacional" só produz lista vazia.
+`useCatalogFilters` zera `kind` quando há categoria e limpa `?tipo=` da URL,
+senão o filtro continuaria agindo sem controle visível para desfazer.
+
+---
+
 ## Identidade visual
 
 Veio do logo: um **Θ branco sobre azul-marinho**, desenhado numa didone. Mykonos

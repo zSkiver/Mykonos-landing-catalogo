@@ -27,20 +27,24 @@ function oneOf<T extends string>(value: string | null, allowed: T[]): T | null {
 export function useCatalogFilters(categoryFromRoute?: string) {
   const [params, setParams] = useSearchParams();
 
-  const filters = useMemo<CatalogFilters>(
-    () => ({
+  const filters = useMemo<CatalogFilters>(() => {
+    const category = categoryFromRoute ?? params.get('categoria');
+
+    return {
       search: params.get('q') ?? '',
-      category: categoryFromRoute ?? params.get('categoria'),
+      category,
       brand: params.get('marca'),
-      kind: oneOf(params.get('tipo'), KINDS),
+      // Escolhida a categoria, o tipo já está decidido — e o controle some da
+      // barra de filtros. Um `?tipo=` esquecido na URL esvaziaria a lista sem
+      // deixar nada visível para desfazer.
+      kind: category ? null : oneOf(params.get('tipo'), KINDS),
       gender: oneOf(params.get('genero'), GENDERS),
       minPrice: num(params.get('min')),
       maxPrice: num(params.get('max')),
       onlyOffers: params.get('ofertas') === '1',
       sort: oneOf(params.get('ordem'), SORTS) ?? 'relevancia',
-    }),
-    [params, categoryFromRoute],
-  );
+    };
+  }, [params, categoryFromRoute]);
 
   const setFilter = useCallback(
     <K extends keyof CatalogFilters>(key: K, value: CatalogFilters[K]) => {
@@ -63,6 +67,10 @@ export function useCatalogFilters(categoryFromRoute?: string) {
 
       if (isEmpty) next.delete(name);
       else next.set(name, value === true ? '1' : String(value));
+
+      // O tipo deixa de ter controle na tela assim que há categoria; deixá-lo
+      // na URL faria o filtro continuar agindo escondido.
+      if (key === 'category' && !isEmpty) next.delete('tipo');
 
       setParams(next, { replace: true, preventScrollReset: true });
     },
