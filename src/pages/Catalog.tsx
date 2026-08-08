@@ -5,7 +5,6 @@ import { PageHero } from '@/components/common/PageHero';
 import { ProductFilters } from '@/components/catalog/ProductFilters';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import { WhatsAppButton } from '@/components/common/WhatsAppButton';
-import { RevealGroup, RevealItem } from '@/components/common/Reveal';
 import { Spinner } from '@/components/common/Spinner';
 import { useStore } from '@/contexts/StoreContext';
 import { applyFilters, priceBounds, useCatalogFilters } from '@/hooks/useCatalog';
@@ -84,13 +83,13 @@ export default function Catalog() {
           ) : results.length === 0 ? (
             <EmptyResults onClear={clear} hasFilters={activeCount > 0} />
           ) : (
-            <RevealGroup className="grid gap-x-6 gap-y-14 sm:grid-cols-2 xl:grid-cols-3" step={0.05}>
+            <div className="grid gap-x-6 gap-y-14 sm:grid-cols-2 xl:grid-cols-3">
               {results.map((product, index) => (
-                <RevealItem key={product.id} className="h-full">
+                <div key={product.id} className="h-full">
                   <ProductCard product={product} priority={index < 6} className="h-full" />
-                </RevealItem>
+                </div>
               ))}
-            </RevealGroup>
+            </div>
           )}
         </div>
       </div>
